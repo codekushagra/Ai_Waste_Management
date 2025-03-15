@@ -228,7 +228,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
             <Leaf className="h-6 w-6 md:h-8 md:w-8 text-green-500 mr-1 md:mr-1" />
             {/* projectn-name */}
             <span className="font-bold text-base md:text-lg text-gray-800">
-              Zero2Hero
+             SwachhAI
             </span>
           </Link>
         </div>
@@ -299,7 +299,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
               className="bg-green-600 hover:bg-green-700 text-white text-sm md:text-base "
               onClick={login}
             >
-              Login
+              Check In
               <LogIn className="ml-1 md:ml-2 h-4 w-4 md:h-5 md:w-5" />
             </Button>
           ) : (
