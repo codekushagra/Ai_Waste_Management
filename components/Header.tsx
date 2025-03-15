@@ -23,7 +23,6 @@ import { Badge } from "./ui/badge";
 import { Web3Auth } from "@web3auth/modal";
 import { CHAIN_NAMESPACES, IProvider, WEB3AUTH_NETWORK } from "@web3auth/base";
 import { EthereumPrivateKeyProvider } from "@web3auth/ethereum-provider";
-import { getDisplayName } from "next/dist/shared/lib/utils";
 import { useEffect, useState } from "react";
 import {
   createUser,
@@ -34,7 +33,7 @@ import {
 } from "@/utils/db/actions";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 
-const clientId = process.env.WEB3_AUTH_CLIENT_ID;
+const clientId = process.env.NEXT_PUBLIC_WEB3_AUTH_CLIENT_ID;
 
 const chainConfig = {
   chainNamespace: CHAIN_NAMESPACES.EIP155,
@@ -42,8 +41,8 @@ const chainConfig = {
   rpcTarget: "https://rpc.ankr.com/eth_sepolia",
   displayName: "Sepolia Testnet",
   blockExplorerUrl: "https://sepolia.etherscan.io",
-  ticket: "ETH",
-  ticketName: "Ethereum",
+  ticker: "ETH",
+  tickerName: "Ethereum",
   logo: "https://assets.web3auth.io/evm-chains/sepolia.png",
 };
 
@@ -57,7 +56,8 @@ if (!clientId) {
 
 const web3Auth = new Web3Auth({
   clientId,
-  web3AuthNetwork: WEB3AUTH_NETWORK.TESTNET,
+  // web3AuthNetwork: WEB3AUTH_NETWORK.TESTNET,
+  web3AuthNetwork: "sapphire_devnet",
   privateKeyProvider,
 });
 
@@ -75,12 +75,14 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
   const [notification, setNotification] = useState<Notification[]>([]);
   const [balance, setBalance] = useState(0);
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const [isWeb3AuthInitialized, setIsWeb3AuthInitialized] = useState(false);
 
   useEffect(() => {
     const init = async () => {
       try {
         await web3Auth.initModal();
         setProvider(web3Auth.provider);
+        setIsWeb3AuthInitialized(true);
         if (web3Auth.connected) {
           setLoggedIn(true);
           const user = await web3Auth.getUserInfo();
@@ -147,7 +149,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
   }, [userInfo]);
 
   const login = async () => {
-    if (!web3Auth) {
+    if (!isWeb3AuthInitialized) {
       console.log("Web3Auth not initialized");
       return;
     }
