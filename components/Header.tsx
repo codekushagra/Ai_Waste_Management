@@ -38,7 +38,8 @@ const clientId = process.env.NEXT_PUBLIC_WEB3_AUTH_CLIENT_ID;
 const chainConfig = {
   chainNamespace: CHAIN_NAMESPACES.EIP155,
   chainId: "0xaa36a7",
-  rpcTarget: "https://rpc.ankr.com/eth_sepolia",
+  rpcTarget: "https://ethereum-sepolia.publicnode.com",
+  // ""
   displayName: "Sepolia Testnet",
   blockExplorerUrl: "https://sepolia.etherscan.io",
   ticker: "ETH",
@@ -332,3 +333,4 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
     </header>
   );
 }
+
