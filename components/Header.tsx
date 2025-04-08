@@ -214,7 +214,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
     return <div>Loading...</div>;
   }
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <header className="bg-[#212121] text-white  border-b border-[#616161] py-0.5 sticky top-0 z-50">
       <div className="flex items-center justify-between px-4 py-2">
         <div className="flex items-center">
           <Button
@@ -223,13 +223,13 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
             className="mr-2 md:mr-4"
             onClick={onMenuClick}
           >
-            <Menu className="h-6 w-6 text-gray-800" />
+            <Menu className="h-6 w-6 text-white " />
           </Button>
           <Link href="/" className="flex items-center">
             <Leaf className="h-6 w-6 md:h-8 md:w-8 text-green-500 mr-1 md:mr-1" />
             {/* projectn-name */}
-            <span className="font-bold text-base md:text-lg text-gray-800">
-             SwachhAI
+            <span className="font-bold text-base md:text-lg text-white">
+              SwachhAI
             </span>
           </Link>
         </div>
@@ -255,7 +255,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="mr-2 relative ">
-                <Bell className="h-5 w-5 text-gray-800" />
+                <Bell className="h-5 w-5 text-white" />
                 {notification.length > 0 && (
                   <Badge className="absolute -top-1 -right-1 px-1 min-w-[1.2rem] h-5">
                     {notification.length}
@@ -322,9 +322,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
                 <DropdownMenuItem>
                   <Link href={"/settings"}>Settings</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={logout}>
-                  Sign Out
-                </DropdownMenuItem>
+                <DropdownMenuItem onClick={logout}>Sign Out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
@@ -333,4 +331,3 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
     </header>
   );
 }
-
