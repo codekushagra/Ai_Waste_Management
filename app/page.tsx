@@ -69,14 +69,14 @@ export default function Home() {
         <AnimatedGlobe />
         <h1 className="text-6xl font-bold mb-6 text-neutral-200 tracking-tight">
           {" "}
-          <span>Swachh</span> <span className="text-green-600">AI </span>
-          <span>Sustainable</span> <span className="text-green-600">AI</span>
+          <span className="text-indigo-600">AI</span> <span className="text-blue-600">Powered </span>
+          <span className="text-green-600">Waste </span> <span className="text-yellow-600">Management</span> <span className="text-rose-600">System</span>
         </h1>
-        <p className="text-xl text-neutral-300 max-w-2xl mx-auto leading-relaxed mb-8">
+        <p className="text-xl text-white max-w-2xl mx-auto leading-relaxed mb-8">
           {" "}
-          Join our initiative in making waste management more efficient and
-          success !
-        </p>
+  Join our initiative to make waste management more efficient and successful!
+</p>
+
         <Button className=" bg-green-600 hover:bg-green-700 cursor-pointer text-white text-lg py-6 px-10 ">
           Found Waste ?
         </Button>
