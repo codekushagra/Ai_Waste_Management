@@ -9,6 +9,7 @@ import type {} from "@types/google.maps";
 import { Libraries } from "@react-google-maps/api";
 import { useRouter } from "next/router";
 import { Toast, toast } from "react-hot-toast";
+import { createReport, getRecentReports, getUserByEmail } from "@/utils/db/actions";
 
 const geminiApiKey = process.env.GEMINI_API_KEY as any;
 const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY;
@@ -177,10 +178,62 @@ export default function ReportPage(){
         
 
         try {
-            const report = await createReport() as any;
+            const report = (await createReport(user.id, newReport.location, newReport.type, newReport.amount, preview || undefined, verificationResult? JSON.stringify(verificationResult): undefined)) as any;
+
+            const formattedReport = {
+                id: report.id,
+                location: report.location,
+                wasteType: report.wasteType,
+                amount: report.amount,
+                createdAt: report.createdAt.toISOString().split('T')[0]
+            }
+            setReports([formattedReport,...reports]) 
+            setNewReport({
+                location:"",
+                type:"",
+                amount:""
+            })
+            setFile(null)
+            setPreview(null)
+            setVerificationStatus('idle')
+            setVerificationResults(null)
+
+            toast.success(`Report submitted successfully! You've earned ${report.points} points`)
         } catch (e) {
             
+            console.error("Error submitting report",e)
+            toast.error("Failed to submit report")
+        }finally{
+            setIsSubmitting(false)
         }
     }
+
+    useEffect(()=>{
+        const checkUser = async()=>{
+            const email = localStorage.getItem('userEmail')
+            if(email){
+                let user = await getUserByEmail(email);
+                setUser(user);
+
+                const recentReports = await getRecentReports() as any
+                const formattedReports = recentReports.map((report:any)=>({
+                    ...report,
+                    
+                    createdAt:report.createdAt.toISOString().split('T')[0]
+                }))
+                setReports(formattedReports)
+            } else{
+                toast.error("Please log in to submit a report")
+                router.push('/')
+            }
+        }
+        checkUser()
+    },[router])
+
+    return (
+        <div className="p-8 max-w-4xl mx-auto ">
+        <h1 className="text-3xl font-semibold mb-6 text-gray-800">Report Waste</h1>
+        </div>
+    )
     
 }
