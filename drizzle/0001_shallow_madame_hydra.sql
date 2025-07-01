@@ -1,0 +1,1 @@
+ALTER TABLE "reports" ALTER COLUMN "number" SET DEFAULT 'unknown';

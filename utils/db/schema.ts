@@ -21,6 +21,7 @@ export const Reports = pgTable("reports", {
   userId: integer("user_id")
     .references(() => Users.id)
     .notNull(),
+   number: varchar("number", { length: 20 }).notNull(),
   location: text("location").notNull(),
   wasteType: varchar("waste_type", { length: 255 }).notNull(),
   amount: varchar("amount", { length: 255 }).notNull(),
