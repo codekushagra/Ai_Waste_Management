@@ -214,7 +214,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
     return <div>Loading...</div>;
   }
   return (
-    <header className="bg-[#212121] text-white  border-b border-[#616161] py-0.5 sticky top-0 z-50">
+    <header className="bg-white text-black  border-b border-[#616161] py-0.5 sticky top-0 z-50 back">
       <div className="flex items-center justify-between px-4 py-2">
         <div className="flex items-center">
           <Button
@@ -223,12 +223,12 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
             className="mr-2 md:mr-4"
             onClick={onMenuClick}
           >
-            <Menu className="h-6 w-6 text-white " />
+            <Menu className="h-6 w-6 text-black " />
           </Button>
           <Link href="/" className="flex items-center">
             <Leaf className="h-6 w-6 md:h-8 md:w-8 text-green-500 mr-1 md:mr-1" />
             {/* projectn-name */}
-            <span className="font-bold text-base md:text-lg text-white">
+            <span className="font-bold text-base md:text-lg text-black">
               SwachhAI
             </span>
           </Link>
@@ -240,7 +240,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
               <input
                 type="text"
                 placeholder="search ..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2 border border-gray-400 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500"
               />
               <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             </div>
@@ -296,8 +296,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
 
           {!loggedIn ? (
             <Button
-              variant="ghost"
-              className="bg-green-600 hover:bg-green-700 text-white text-sm md:text-base "
+              className="bg-green-500 hover:bg-green-6s00 text-white text-sm md:text-base "
               onClick={login}
             >
               Check In

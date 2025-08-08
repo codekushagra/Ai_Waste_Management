@@ -1,3 +1,4 @@
+"use client";
 import {
   ArrowRight,
   Leaf,
@@ -9,6 +10,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 export function AnimatedGlobe() {
   return (
@@ -64,22 +66,31 @@ export function AnimatedGlobe() {
 
 export default function Home() {
   return (
-    <div className="container mx-auto bg-[#212121]  px-4 py-16">
+    <motion.div
+      initial={{ opacity: 0, filter: "blur(10px)" }}
+      animate={{ opacity: 1, filter: "blur(0px)" }}
+      transition={{ duration: 1.5, delay: 0.4, ease: "easeIn" }}
+      className="container mx-auto bg-white px-4 py-16"
+    >
       <section className="text-center mb-30">
         <AnimatedGlobe />
-        <h1 className="text-6xl font-bold mb-6 text-neutral-200 tracking-tight">
-          {" "}
-          <span className="text-indigo-600">AI</span> <span className="text-blue-600">Powered </span>
-          <span className="text-green-600">Waste </span> <span className="text-yellow-600">Management</span> <span className="text-rose-600">System</span>
+        <h1 className="text-6xl font-bold font-mono mb-6 tracking-tight bg-gradient-to-r from-purple-400 via-sky-400  to-emerald-400 text-transparent bg-clip-text">
+          AI Powered Waste Management System
         </h1>
-        <p className="text-xl text-white max-w-2xl mx-auto leading-relaxed mb-8">
-          {" "}
-  Join our initiative to make waste management more efficient and successful!
-</p>
 
-        <Button className=" bg-green-600 hover:bg-green-700 cursor-pointer text-white text-lg py-6 px-10 ">
-          Found Waste ?
-        </Button>
+        <p className="text-xl text-gray-500 font-mono max-w-2xl mx-auto leading-relaxed mb-8">
+          {" "}
+          Join our initiative to make waste management more efficient and
+          successful!
+        </p>
+
+        <Link href={"/report"}>
+          <motion.div whileTap={{ scale: 0.95 }}>
+            <Button className=" bg-green-500 hover:bg-green-600 cursor-pointer text-white text-lg py-6 px-10 ">
+              Found Waste ?
+            </Button>
+          </motion.div>
+        </Link>
       </section>
 
       <section className="grid md:grid-cols-3 gap-8 mb-20">
@@ -103,7 +114,7 @@ export default function Home() {
       </section>
 
       <section className="bg-white p-10 rounded-3xl shadow-lg mb-20">
-        <h2 className="text-center font-bold text-4xl text-gray-800">
+        <h2 className="text-center font-bold text-4xl text-gray-800 mb-2.5">
           <span className="text-green-600">Cleanup</span> Data
         </h2>
         <div className="grid md:grid-cols-4 gap-6">
@@ -113,7 +124,7 @@ export default function Home() {
           <ImpactCard title="CO2 Offset" value={"29 Kg"} icon={Leaf} />
         </div>
       </section>
-    </div>
+    </motion.div>
   );
 }
 
@@ -127,7 +138,12 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <div className="bg-white p-8  rounded-xl shadow-md hover:shadow-lg transition-all duration-300 ease-in-out flex flex-col items-center text-center">
+    <div
+      className="bg-white p-8  rounded-md hover:shadow-lg transition-all duration-300 ease-in-out flex flex-col items-center text-center"
+      style={{
+        boxShadow: `rgba(0, 0, 0, 0.15) 0px 5px 15px 0px;`,
+      }}
+    >
       <div className="bg-green-100 p-4 rounded-full mb-6">
         <Icon className="h-8 w-8 text-green-600" />
       </div>

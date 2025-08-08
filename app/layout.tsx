@@ -6,7 +6,7 @@ import "./global.css";
 import { Toaster } from "react-hot-toast";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
-import {getUserByEmail , getAvailableRewards} from "@/utils/db/actions"
+import { getUserByEmail, getAvailableRewards } from "@/utils/db/actions";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,27 +17,29 @@ export default function RootLayout({
 }>) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [totalEarnings, setTotalEarnings] = useState(0);
-useEffect(() => {
+  useEffect(() => {
     const fetchTotalEarnings = async () => {
       try {
-        const userEmail = localStorage.getItem('userEmail')
+        const userEmail = localStorage.getItem("userEmail");
         if (userEmail) {
-          const user = await getUserByEmail(userEmail)
-          console.log('user from layout', user);
-          
+          const user = await getUserByEmail(userEmail);
+          console.log("user from layout", user);
+
           if (user) {
-            const availableRewards = await getAvailableRewards(user.id) as any
-            console.log('availableRewards from layout', availableRewards);
-                        setTotalEarnings(availableRewards)
+            const availableRewards = (await getAvailableRewards(
+              user.id
+            )) as any;
+            console.log("availableRewards from layout", availableRewards);
+            setTotalEarnings(availableRewards);
           }
         }
       } catch (error) {
-        console.error('Error fetching total earnings:', error)
+        console.error("Error fetching total earnings:", error);
       }
-    }
+    };
 
-    fetchTotalEarnings()
-  }, [])
+    fetchTotalEarnings();
+  }, []);
 
   return (
     <html lang="en">
@@ -48,7 +50,7 @@ useEffect(() => {
             onMenuClick={() => setSidebarOpen(!sidebarOpen)}
             totalEarnings={totalEarnings}
           />
-          <div className="flex flex-1 bg-[#212121]">
+          <div className="flex flex-1 bg-white">
             {/*sidebar*/}
             <Sidebar open={sidebarOpen} />
             <main className="flex-1 p-4 lg:p-8 ml-0 lg:ml-64 transition-all duration-300">

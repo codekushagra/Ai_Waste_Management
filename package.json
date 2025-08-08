@@ -25,6 +25,7 @@
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.40.0",
     "esbuild": "^0.25.0",
+    "framer-motion": "^12.23.12",
     "lucide-react": "^0.479.0",
     "next": "15.2.2-canary.3",
     "react": "^19.0.0",
