@@ -57,7 +57,7 @@ export default function Sidebar({ open }: SidebarProps) {
   };
   return (
     <aside
-      className={`bg-white border-r border-[#616161] pt-20  text-gray-800 w-64 fixed inset-y-0 left-0 z-30 transform transition-transform duration-300 ease-in-out ${
+      className={`bg-white border-r border-gray-400 pt-20  text-gray-800 w-64 fixed inset-y-0 left-0 z-30 transform transition-transform duration-300 ease-in-out ${
         open ? "translate-x-0" : "-translate-x-full"
       } lg:translate-x-0`}
     >

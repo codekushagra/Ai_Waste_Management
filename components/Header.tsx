@@ -214,7 +214,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
     return <div>Loading...</div>;
   }
   return (
-    <header className="bg-white text-black  border-b border-[#616161] py-0.5 sticky top-0 z-50 back">
+    <header className="bg-white text-black  border-b border-gray-400 py-0.5 sticky top-0 z-50 backdrop-blur-lg">
       <div className="flex items-center justify-between px-4 py-2">
         <div className="flex items-center">
           <Button
@@ -289,7 +289,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
 
           <div className="mr-2 md:mr-4 flex items-center bg-gray-100 rounded-full px-2 md:px-3 py-1">
             <Coins className="h-4 w-4 md:h-5 md:w-5 mr-1 text-green-500" />
-            <span className="font-semibold text-sm md:text-base text-gray-800">
+            <span className="font-semibold text-sm md:text-base text-gray-800 select-none">
               {balance.toFixed(2)}
             </span>
           </div>

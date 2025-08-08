@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import GapingText from "@/components/ui/Gaping-Text";
 
 export function AnimatedGlobe() {
   return (
@@ -69,13 +70,13 @@ export default function Home() {
     <motion.div
       initial={{ opacity: 0, filter: "blur(10px)" }}
       animate={{ opacity: 1, filter: "blur(0px)" }}
-      transition={{ duration: 1.5, delay: 0.4, ease: "easeIn" }}
+      transition={{ duration: 1, delay: 0.3, ease: "easeIn" }}
       className="container mx-auto bg-white px-4 py-16"
     >
       <section className="text-center mb-30">
         <AnimatedGlobe />
-        <h1 className="text-6xl font-bold font-mono mb-6 tracking-tight bg-gradient-to-r from-purple-400 via-sky-400  to-emerald-400 text-transparent bg-clip-text">
-          AI Powered Waste Management System
+        <h1 className="text-6xl font-bold  font-mono mb-6 pb-1.5 tracking-tight bg-gradient-to-r from-purple-400 via-sky-400  to-emerald-400 text-transparent bg-clip-text">
+          <GapingText text="AI Powered Waste Management System" />
         </h1>
 
         <p className="text-xl text-gray-500 font-mono max-w-2xl mx-auto leading-relaxed mb-8">
