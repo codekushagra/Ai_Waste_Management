@@ -12,7 +12,7 @@ import { Toast, toast } from "react-hot-toast";
 import { createReport, getRecentReports, getUserByEmail } from "@/utils/db/actions";
 
 const geminiApiKey = process.env.GEMINI_API_KEY as any;
-const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY;
+const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY || "";
 
 const libraries: Libraries = ['places']
 
