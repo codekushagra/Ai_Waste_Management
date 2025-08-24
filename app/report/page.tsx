@@ -5,7 +5,7 @@ import { MapPin, Upload, CheckCircle, Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { StandaloneSearchBox, useJsApiLoader } from "@react-google-maps/api";
-import type {} from "@types/google.maps";
+// import type {} from "@types/google.maps";
 import { Libraries } from "@react-google-maps/api";
 import { useRouter } from "next/navigation";
 import { Toast, toast } from "react-hot-toast";
