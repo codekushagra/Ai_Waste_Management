@@ -255,7 +255,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="mr-2 relative ">
-                <Bell className="h-5 w-5 text-white" />
+                <Bell className="h-5 w-5 text-black" />
                 {notification.length > 0 && (
                   <Badge className="absolute -top-1 -right-1 px-1 min-w-[1.2rem] h-5">
                     {notification.length}
