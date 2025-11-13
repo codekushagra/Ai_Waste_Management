@@ -3,6 +3,10 @@
 import { useState, useCallback, useEffect } from "react";
 import { MapPin, Upload, CheckCircle, Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+
+
+
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { StandaloneSearchBox, useJsApiLoader } from "@react-google-maps/api";
 // import type {} from "@types/google.maps";
@@ -16,8 +20,9 @@ const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY || "";
 
 const libraries: Libraries = ['places']
 
+
 export default function ReportPage() {
-    const [user, setUser] = useState('');
+    const [user, setUser] = useState<any>(null);
     const router = useRouter();
 
     const [reports, setReports] = useState<Array<{

@@ -11,6 +11,8 @@ import {
   Settings,
   Home,
   ChevronRight,
+  Info,
+  Users,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
@@ -21,6 +23,8 @@ const sidebarItems = [
   { href: "/collect", label: "Collect Waste", icon: Trash },
   { href: "/rewards", label: "Rewards", icon: Coins },
   { href: "/leaderboard", label: "Leaderboard", icon: Medal },
+  { href: "/about", label: "About", icon: Info },
+  { href: "/team", label: "Team", icon: Users },
 ];
 
 interface SidebarProps {
@@ -36,6 +40,8 @@ export default function Sidebar({ open }: SidebarProps) {
     if (path === "/collect") return "Collect Waste";
     if (path === "/reward") return "Rewards";
     if (path === "/leaderboard") return "Leaderboard";
+    if (path === "/about") return "About";
+    if (path === "/team") return "Team";
 
     return "";
   }

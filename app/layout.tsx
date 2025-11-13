@@ -6,6 +6,7 @@ import "./global.css";
 import { Toaster } from "react-hot-toast";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
+import PageLoader from "@/components/PageLoader";
 import { getUserByEmail, getAvailableRewards } from "@/utils/db/actions";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -17,6 +18,8 @@ export default function RootLayout({
 }>) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [totalEarnings, setTotalEarnings] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     const fetchTotalEarnings = async () => {
       try {
@@ -35,6 +38,11 @@ export default function RootLayout({
         }
       } catch (error) {
         console.error("Error fetching total earnings:", error);
+      } finally {
+        // Minimum loading time for better UX (1.5 seconds)
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 1500);
       }
     };
 
@@ -44,20 +52,24 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <div className="min-h-screen bg-gray-50 flex flex-col">
-          {/*header*/}
-          <Header
-            onMenuClick={() => setSidebarOpen(!sidebarOpen)}
-            totalEarnings={totalEarnings}
-          />
-          <div className="flex flex-1 bg-white">
-            {/*sidebar*/}
-            <Sidebar open={sidebarOpen} />
-            <main className="flex-1 p-4 lg:p-8 ml-0 lg:ml-64 transition-all duration-300">
-              {children}
-            </main>
+        {isLoading && <PageLoader />}
+        
+        {!isLoading && (
+          <div className="min-h-screen bg-gray-50 flex flex-col">
+            {/*header*/}
+            <Header
+              onMenuClick={() => setSidebarOpen(!sidebarOpen)}
+              totalEarnings={totalEarnings}
+            />
+            <div className="flex flex-1 bg-white">
+              {/*sidebar*/}
+              <Sidebar open={sidebarOpen} />
+              <main className="flex-1 p-4 lg:p-8 ml-0 lg:ml-64 transition-all duration-300">
+                {children}
+              </main>
+            </div>
           </div>
-        </div>
+        )}
         <Toaster />
       </body>
     </html>

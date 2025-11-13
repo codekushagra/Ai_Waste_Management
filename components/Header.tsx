@@ -6,7 +6,6 @@ import {
   Menu,
   Coins,
   Leaf,
-  Search,
   Bell,
   User,
   ChevronDown,
@@ -216,7 +215,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
   return (
     <header className="bg-white text-black  border-b border-gray-400 py-0.5 sticky top-0 z-50 backdrop-blur-lg">
       <div className="flex items-center justify-between px-4 py-2">
-        <div className="flex items-center">
+        <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="icon"
@@ -234,24 +233,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
           </Link>
         </div>
 
-        {!isMobile && (
-          <div className="flex-1 max-w-xl mx-4">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="search ..."
-                className="w-full px-4 py-2 border border-gray-400 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            </div>
-          </div>
-        )}
         <div className="flex items-center">
-          {isMobile && (
-            <Button variant="ghost" size="icon" className="mr-2 ">
-              <Search className="h-5 w-5 text-gray-800" />
-            </Button>
-          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="mr-2 relative ">

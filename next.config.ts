@@ -10,3 +10,9 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
+export const config = {
+  matcher: ['/report-waste/:path*'], // Apply middleware to this route
+};
+
+
