@@ -1,5 +1,16 @@
 import { db } from "./dbConfig";
+<<<<<<< HEAD
 import { Notifications, Reports, Rewards, Transactions, Users, CollectedWastes, CollectionOTP } from "./schema";
+=======
+import {
+  Notifications,
+  Reports,
+  Rewards,
+  Transactions,
+  Users,
+  CollectedWastes,
+} from "./schema";
+>>>>>>> 33c6b53835b4712e135ac746c88f604e1ca28bc3
 import { eq, sql, and, desc } from "drizzle-orm";
 
 export async function createUser(email: string, name: string) {
@@ -45,15 +56,17 @@ export async function getRecentReports(limit: number = 10) {
 }
 export async function getAvailableRewards(userId: number) {
   try {
-    console.log('Fetching available rewards for user:', userId);
-    
+    console.log("Fetching available rewards for user:", userId);
+
     // Get user's total points
     const userTransactions = await getRewardTransactions(userId);
     const userPoints = (userTransactions || []).reduce((total, transaction) => {
-      return transaction.type.startsWith('earned') ? total + transaction.amount : total - transaction.amount;
+      return transaction.type.startsWith("earned")
+        ? total + transaction.amount
+        : total - transaction.amount;
     }, 0);
 
-    console.log('User total points:', userPoints);
+    console.log("User total points:", userPoints);
     // Get available rewards from the database
     const dbRewards = await db
       .select({
@@ -67,7 +80,7 @@ export async function getAvailableRewards(userId: number) {
       .where(eq(Rewards.isAvailable, true))
       .execute();
 
-    console.log('Rewards from database:', dbRewards);
+    console.log("Rewards from database:", dbRewards);
 
     // Combine user points and database rewards
     const allRewards = [
@@ -76,12 +89,12 @@ export async function getAvailableRewards(userId: number) {
         name: "Your Points",
         cost: userPoints,
         description: "Redeem your earned points",
-        collectionInfo: "Points earned from reporting and collecting waste"
+        collectionInfo: "Points earned from reporting and collecting waste",
       },
-      ...dbRewards
+      ...dbRewards,
     ];
 
-    console.log('All available rewards:', allRewards);
+    console.log("All available rewards:", allRewards);
     return allRewards;
   } catch (error) {
     console.error("Error fetching available rewards:", error);
@@ -89,14 +102,14 @@ export async function getAvailableRewards(userId: number) {
   }
 }
 
-
 export async function getUnreadNotifications(userId: number) {
   try {
-    
     return await db
       .select()
       .from(Notifications)
-      .where(and(eq(Notifications.userId, userId), eq(Notifications.isRead, false)))
+      .where(
+        and(eq(Notifications.userId, userId), eq(Notifications.isRead, false))
+      )
       .execute();
   } catch (error) {
     console.log("Error fetching notifications", error);
@@ -104,42 +117,43 @@ export async function getUnreadNotifications(userId: number) {
   }
 }
 
-export async function getUserBalance(userId: number):Promise<number> {
-  const transactions = await getRewardTransactions(userId)|| []
+export async function getUserBalance(userId: number): Promise<number> {
+  const transactions = (await getRewardTransactions(userId)) || [];
 
-  if(!transactions) return 0;
-  const balance = transactions.reduce((acc:number, transaction:any) => {
-    return transaction.type.startsWith('earned') ? acc + transaction.amount : acc - transaction.amount;
+  if (!transactions) return 0;
+  const balance = transactions.reduce((acc: number, transaction: any) => {
+    return transaction.type.startsWith("earned")
+      ? acc + transaction.amount
+      : acc - transaction.amount;
   }, 0);
 
   return Math.max(balance, 0);
 }
 
-export async function getRewardTransactions(userId: number) { 
+export async function getRewardTransactions(userId: number) {
   try {
-    const transactions = await db.select({
-      id: Transactions.id,
-      type: Transactions.type,
-      amount: Transactions.amount,
-      description: Transactions.description,
-      date: Transactions.date,
-    })
-    .from(Transactions)
-    .where(eq(Transactions.userId, userId))
-    .orderBy(desc(Transactions.date))
-    .limit(10)
-    .execute();
-      
-    const formattedTransactions = transactions.map(t=>({
+    const transactions = await db
+      .select({
+        id: Transactions.id,
+        type: Transactions.type,
+        amount: Transactions.amount,
+        description: Transactions.description,
+        date: Transactions.date,
+      })
+      .from(Transactions)
+      .where(eq(Transactions.userId, userId))
+      .orderBy(desc(Transactions.date))
+      .limit(10)
+      .execute();
+
+    const formattedTransactions = transactions.map((t) => ({
       ...t,
-      date: t.date.toISOString().split('T')[0]
-    }))
+      date: t.date.toISOString().split("T")[0],
+    }));
     return formattedTransactions;
-    
   } catch (error) {
     console.log("Error fetching transactions", error);
     return null;
-    
   }
 }
 
@@ -169,27 +183,30 @@ export async function clearAllNotifications(userId: number) {
 
 export async function createReport(
   userId: number,
-  
+
   location: string,
   wasteType: string,
   amount: string,
   imageUrl?: string,
-  number?:string,
-  
-  verificationResult?: any,
+  number?: string,
+
+  verificationResult?: any
 ) {
   try {
-    const [report]  = await db.insert(Reports).values({
-      userId: userId,
-      location,
-      number: number || "",
-      wasteType,
-      amount,
-      imageUrl,
-      verificationResult, 
-      status: 'pending'
-
-    }).returning().execute()
+    const [report] = await db
+      .insert(Reports)
+      .values({
+        userId: userId,
+        location,
+        number: number || "",
+        wasteType,
+        amount,
+        imageUrl,
+        verificationResult,
+        status: "pending",
+      })
+      .returning()
+      .execute();
 
     const pointsEarned = 10; // Example points earned for each report
 
@@ -197,53 +214,82 @@ export async function createReport(
     await updateRewardPoints(userId, pointsEarned);
 
     // create transaction
-    await createTransaction(userId, 'earned_report', pointsEarned, `Earned ${pointsEarned} points for reporting waste`);
+    await createTransaction(
+      userId,
+      "earned_report",
+      pointsEarned,
+      `Earned ${pointsEarned} points for reporting waste`
+    );
 
     // create notification
-    await createNotification(userId, `You earned ${pointsEarned} points for reporting waste`, 'reward');
+    await createNotification(
+      userId,
+      `You earned ${pointsEarned} points for reporting waste`,
+      "reward"
+    );
 
     return report;
-  } catch (error) {    
+  } catch (error) {
     console.error("Error creating report", error);
-    
+
     return null;
   }
 }
 export async function updateRewardPoints(userId: number, pointsToAdd: number) {
   try {
-    const [updatedReward] = await db.update(Rewards).set({
-      points: sql`${Rewards.points} + ${pointsToAdd}`,
-
-    }).where(eq(Rewards.userId, userId)).returning().execute();
+    const [updatedReward] = await db
+      .update(Rewards)
+      .set({
+        points: sql`${Rewards.points} + ${pointsToAdd}`,
+      })
+      .where(eq(Rewards.userId, userId))
+      .returning()
+      .execute();
     return updatedReward;
   } catch (error) {
     console.error("Error updating reward points", error);
   }
 }
 
-export async function createTransaction(userId: number, type: 'earned_report' | 'earned_collect' |'redeemed', amount: number, description: string) {
+export async function createTransaction(
+  userId: number,
+  type: "earned_report" | "earned_collect" | "redeemed",
+  amount: number,
+  description: string
+) {
   try {
-    const [transaction] = await db.insert(Transactions).values({
-      userId,
-      type,
-      amount,
-      description,
-    }).returning().execute();
+    const [transaction] = await db
+      .insert(Transactions)
+      .values({
+        userId,
+        type,
+        amount,
+        description,
+      })
+      .returning()
+      .execute();
     return transaction;
   } catch (error) {
     console.error("Error creating transaction", error);
     throw error;
   }
-   
 }
 
-export async function createNotification(userId: number, message: string, type:string) {
+export async function createNotification(
+  userId: number,
+  message: string,
+  type: string
+) {
   try {
-    const [notification] = await db.insert(Notifications).values({
-      userId,
-      message,
-      type,
-    }).returning().execute();
+    const [notification] = await db
+      .insert(Notifications)
+      .values({
+        userId,
+        message,
+        type,
+      })
+      .returning()
+      .execute();
     return notification;
   } catch (error) {
     console.error("Error creating notification", error);
@@ -270,6 +316,7 @@ export async function getWasteCollectionTasks(userId?: number) {
     let whereClause;
     if (userId) {
       // Include pending, in_progress, verified, collected, and completed tasks
+<<<<<<< HEAD
       whereClause = sql`${Reports.status} IN ('pending', 'in_progress', 'verified', 'collected', 'completed') OR ${Reports.collectorId} = ${userId}`
     } else {
       // Default: return pending tasks only
@@ -278,31 +325,53 @@ export async function getWasteCollectionTasks(userId?: number) {
     
     const tasks = await baseQuery
       .where(whereClause)
+=======
+      const tasks = await db
+        .select()
+        .from(Reports)
+        .where(
+          sql`${Reports.status} IN ('pending', 'in_progress', 'verified', 'collected', 'completed') OR ${Reports.collectorId} = ${userId}`
+        )
+        .orderBy(desc(Reports.createdAt))
+        .execute();
+      return tasks;
+    }
+
+    // Default: return pending tasks only
+    const tasks = await db
+      .select()
+      .from(Reports)
+      .where(eq(Reports.status, "pending"))
+>>>>>>> 33c6b53835b4712e135ac746c88f604e1ca28bc3
       .orderBy(desc(Reports.createdAt))
       .limit(100) // Add limit to prevent fetching too many rows
       .execute();
     
     return tasks;
   } catch (error) {
-    console.error('Error fetching waste collection tasks:', error);
+    console.error("Error fetching waste collection tasks:", error);
     return [];
   }
 }
 
-export async function updateTaskStatus(taskId: number, newStatus: string, collectorId: number) {
+export async function updateTaskStatus(
+  taskId: number,
+  newStatus: string,
+  collectorId: number
+) {
   try {
     const [updatedTask] = await db
       .update(Reports)
       .set({
         status: newStatus,
-        collectorId: newStatus === 'in_progress' ? collectorId : undefined,
+        collectorId: newStatus === "in_progress" ? collectorId : undefined,
       })
       .where(eq(Reports.id, taskId))
       .returning()
       .execute();
     return updatedTask;
   } catch (error) {
-    console.error('Error updating task status:', error);
+    console.error("Error updating task status:", error);
     return null;
   }
 }
@@ -319,11 +388,11 @@ export async function saveCollectedWaste(
       reportId,
       collectorId,
       collectionDate: new Date(),
-      status: 'collected',
-    }
+      status: "collected",
+    };
 
-    if (verifierName) values.verifierName = verifierName
-    if (verifierNumber) values.verifierNumber = verifierNumber
+    if (verifierName) values.verifierName = verifierName;
+    if (verifierNumber) values.verifierNumber = verifierNumber;
 
     const [collectedWaste] = await db
       .insert(CollectedWastes)
@@ -334,13 +403,13 @@ export async function saveCollectedWaste(
     // Update report status to collected
     await db
       .update(Reports)
-      .set({ status: 'collected' })
+      .set({ status: "collected" })
       .where(eq(Reports.id, reportId))
       .execute();
 
     return collectedWaste;
   } catch (error) {
-    console.error('Error saving collected waste:', error);
+    console.error("Error saving collected waste:", error);
     return null;
   }
 }
@@ -352,7 +421,7 @@ export async function saveReward(userId: number, rewardAmount: number) {
       .insert(Transactions)
       .values({
         userId,
-        type: 'earned_collect',
+        type: "earned_collect",
         amount: rewardAmount,
         description: `Earned ${rewardAmount} points for collecting waste`,
       })
@@ -363,11 +432,15 @@ export async function saveReward(userId: number, rewardAmount: number) {
     await updateRewardPoints(userId, rewardAmount);
 
     // Create notification
-    await createNotification(userId, `You earned ${rewardAmount} points for collecting waste`, 'reward');
+    await createNotification(
+      userId,
+      `You earned ${rewardAmount} points for collecting waste`,
+      "reward"
+    );
 
     return transaction;
   } catch (error) {
-    console.error('Error saving reward:', error);
+    console.error("Error saving reward:", error);
     return null;
   }
 }
@@ -379,24 +452,24 @@ export async function getImpactStats() {
       .select({ total: sql<string>`COUNT(*)` })
       .from(CollectedWastes)
       .execute();
-    
-    const totalCollected = parseInt(collectedWasteResult[0]?.total || '0');
+
+    const totalCollected = parseInt(collectedWasteResult[0]?.total || "0");
 
     // Get total reports submitted
     const reportsResult = await db
       .select({ total: sql<string>`COUNT(*)` })
       .from(Reports)
       .execute();
-    
-    const totalReports = parseInt(reportsResult[0]?.total || '0');
+
+    const totalReports = parseInt(reportsResult[0]?.total || "0");
 
     // Get total tokens earned (sum of earned_collect transactions)
     const tokensResult = await db
       .select({ total: sql<number>`COALESCE(SUM(${Transactions.amount}), 0)` })
       .from(Transactions)
-      .where(eq(Transactions.type, 'earned_collect'))
+      .where(eq(Transactions.type, "earned_collect"))
       .execute();
-    
+
     const totalTokens = tokensResult[0]?.total || 0;
 
     // Calculate CO2 offset (roughly 1 kg waste = 2 kg CO2 offset)
@@ -409,7 +482,7 @@ export async function getImpactStats() {
       co2Offset: co2Offset,
     };
   } catch (error) {
-    console.error('Error fetching impact stats:', error);
+    console.error("Error fetching impact stats:", error);
     // Return default values on error
     return {
       wasteCollected: 0,
@@ -420,6 +493,7 @@ export async function getImpactStats() {
   }
 }
 
+<<<<<<< HEAD
 // ✅ OTP Functions
 export async function generateCollectionOTP(reportId: number) {
   try {
@@ -454,10 +528,76 @@ export async function generateCollectionOTP(reportId: number) {
     };
   } catch (error) {
     console.error('❌ Error generating OTP:', error);
+=======
+export async function redeemReward(userId: number, rewardId: number) {
+  try {
+    const userReward = (await getOrCreateReward(userId)) as any;
+
+    if (rewardId === 0) {
+      // Redeem all points
+      const [updatedReward] = await db
+        .update(Rewards)
+        .set({
+          points: 0,
+          updatedAt: new Date(),
+        })
+        .where(eq(Rewards.userId, userId))
+        .returning()
+        .execute();
+
+      // Create a transaction for this redemption
+      await createTransaction(
+        userId,
+        "redeemed",
+        userReward.points,
+        `Redeemed all points: ${userReward.points}`
+      );
+
+      return updatedReward;
+    } else {
+      // Existing logic for redeeming specific rewards
+      const availableReward = await db
+        .select()
+        .from(Rewards)
+        .where(eq(Rewards.id, rewardId))
+        .execute();
+
+      if (
+        !userReward ||
+        !availableReward[0] ||
+        userReward.points < availableReward[0].points
+      ) {
+        throw new Error("Insufficient points or invalid reward");
+      }
+
+      const [updatedReward] = await db
+        .update(Rewards)
+        .set({
+          points: sql`${Rewards.points} - ${availableReward[0].points}`,
+          updatedAt: new Date(),
+        })
+        .where(eq(Rewards.userId, userId))
+        .returning()
+        .execute();
+
+      // Create a transaction for this redemption
+      await createTransaction(
+        userId,
+        "redeemed",
+        availableReward[0].points,
+        `Redeemed: ${availableReward[0].name}`
+      );
+
+      return updatedReward;
+    }
+  } catch (error) {
+    console.error("Error redeeming reward:", error);
+>>>>>>> 33c6b53835b4712e135ac746c88f604e1ca28bc3
     throw error;
   }
 }
 
+<<<<<<< HEAD
 export async function verifyCollectionOTP(reportId: number, otp: string) {
   try {
     const result = await db.query.CollectionOTP.findFirst({
@@ -504,3 +644,27 @@ export async function getCollectionOTPForReport(reportId: number) {
     return null;
   }
 }
+=======
+export async function getAllRewards() {
+  try {
+    const rewards = await db
+      .select({
+        id: Rewards.id,
+        userId: Rewards.userId,
+        points: Rewards.points,
+        level: Rewards.level,
+        createdAt: Rewards.createdAt,
+        userName: Users.name,
+      })
+      .from(Rewards)
+      .leftJoin(Users, eq(Rewards.userId, Users.id))
+      .orderBy(desc(Rewards.points))
+      .execute();
+
+    return rewards;
+  } catch (error) {
+    console.error("Error fetching all rewards:", error);
+    return [];
+  }
+}
+>>>>>>> 33c6b53835b4712e135ac746c88f604e1ca28bc3
