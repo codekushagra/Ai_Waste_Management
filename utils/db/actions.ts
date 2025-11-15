@@ -1,16 +1,5 @@
 import { db } from "./dbConfig";
-<<<<<<< HEAD
 import { Notifications, Reports, Rewards, Transactions, Users, CollectedWastes, CollectionOTP } from "./schema";
-=======
-import {
-  Notifications,
-  Reports,
-  Rewards,
-  Transactions,
-  Users,
-  CollectedWastes,
-} from "./schema";
->>>>>>> 33c6b53835b4712e135ac746c88f604e1ca28bc3
 import { eq, sql, and, desc } from "drizzle-orm";
 
 export async function createUser(email: string, name: string) {
@@ -316,7 +305,6 @@ export async function getWasteCollectionTasks(userId?: number) {
     let whereClause;
     if (userId) {
       // Include pending, in_progress, verified, collected, and completed tasks
-<<<<<<< HEAD
       whereClause = sql`${Reports.status} IN ('pending', 'in_progress', 'verified', 'collected', 'completed') OR ${Reports.collectorId} = ${userId}`
     } else {
       // Default: return pending tasks only
@@ -325,24 +313,6 @@ export async function getWasteCollectionTasks(userId?: number) {
     
     const tasks = await baseQuery
       .where(whereClause)
-=======
-      const tasks = await db
-        .select()
-        .from(Reports)
-        .where(
-          sql`${Reports.status} IN ('pending', 'in_progress', 'verified', 'collected', 'completed') OR ${Reports.collectorId} = ${userId}`
-        )
-        .orderBy(desc(Reports.createdAt))
-        .execute();
-      return tasks;
-    }
-
-    // Default: return pending tasks only
-    const tasks = await db
-      .select()
-      .from(Reports)
-      .where(eq(Reports.status, "pending"))
->>>>>>> 33c6b53835b4712e135ac746c88f604e1ca28bc3
       .orderBy(desc(Reports.createdAt))
       .limit(100) // Add limit to prevent fetching too many rows
       .execute();
@@ -493,7 +463,6 @@ export async function getImpactStats() {
   }
 }
 
-<<<<<<< HEAD
 // ✅ OTP Functions
 export async function generateCollectionOTP(reportId: number) {
   try {
@@ -528,76 +497,10 @@ export async function generateCollectionOTP(reportId: number) {
     };
   } catch (error) {
     console.error('❌ Error generating OTP:', error);
-=======
-export async function redeemReward(userId: number, rewardId: number) {
-  try {
-    const userReward = (await getOrCreateReward(userId)) as any;
-
-    if (rewardId === 0) {
-      // Redeem all points
-      const [updatedReward] = await db
-        .update(Rewards)
-        .set({
-          points: 0,
-          updatedAt: new Date(),
-        })
-        .where(eq(Rewards.userId, userId))
-        .returning()
-        .execute();
-
-      // Create a transaction for this redemption
-      await createTransaction(
-        userId,
-        "redeemed",
-        userReward.points,
-        `Redeemed all points: ${userReward.points}`
-      );
-
-      return updatedReward;
-    } else {
-      // Existing logic for redeeming specific rewards
-      const availableReward = await db
-        .select()
-        .from(Rewards)
-        .where(eq(Rewards.id, rewardId))
-        .execute();
-
-      if (
-        !userReward ||
-        !availableReward[0] ||
-        userReward.points < availableReward[0].points
-      ) {
-        throw new Error("Insufficient points or invalid reward");
-      }
-
-      const [updatedReward] = await db
-        .update(Rewards)
-        .set({
-          points: sql`${Rewards.points} - ${availableReward[0].points}`,
-          updatedAt: new Date(),
-        })
-        .where(eq(Rewards.userId, userId))
-        .returning()
-        .execute();
-
-      // Create a transaction for this redemption
-      await createTransaction(
-        userId,
-        "redeemed",
-        availableReward[0].points,
-        `Redeemed: ${availableReward[0].name}`
-      );
-
-      return updatedReward;
-    }
-  } catch (error) {
-    console.error("Error redeeming reward:", error);
->>>>>>> 33c6b53835b4712e135ac746c88f604e1ca28bc3
     throw error;
   }
 }
 
-<<<<<<< HEAD
 export async function verifyCollectionOTP(reportId: number, otp: string) {
   try {
     const result = await db.query.CollectionOTP.findFirst({
@@ -644,27 +547,3 @@ export async function getCollectionOTPForReport(reportId: number) {
     return null;
   }
 }
-=======
-export async function getAllRewards() {
-  try {
-    const rewards = await db
-      .select({
-        id: Rewards.id,
-        userId: Rewards.userId,
-        points: Rewards.points,
-        level: Rewards.level,
-        createdAt: Rewards.createdAt,
-        userName: Users.name,
-      })
-      .from(Rewards)
-      .leftJoin(Users, eq(Rewards.userId, Users.id))
-      .orderBy(desc(Rewards.points))
-      .execute();
-
-    return rewards;
-  } catch (error) {
-    console.error("Error fetching all rewards:", error);
-    return [];
-  }
-}
->>>>>>> 33c6b53835b4712e135ac746c88f604e1ca28bc3
