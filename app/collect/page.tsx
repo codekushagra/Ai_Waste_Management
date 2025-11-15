@@ -4,8 +4,9 @@ import { Trash2, MapPin, CheckCircle, Clock, ArrowRight, Camera, Upload, Loader,
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'react-hot-toast'
-import { getWasteCollectionTasks, updateTaskStatus, saveReward, saveCollectedWaste, getUserByEmail } from '@/utils/db/actions' 
+import { getWasteCollectionTasks, updateTaskStatus, saveReward, saveCollectedWaste, getUserByEmail, generateCollectionOTP, verifyCollectionOTP } from '@/utils/db/actions' 
 import { GoogleGenerativeAI } from "@google/generative-ai"
+import { ProtectedRoute } from '@/components/ProtectedRoute'
 
 // Make sure to set your Gemini API key in your environment variables
 const geminiApiKey = process.env.GEMINI_API_KEY;
@@ -23,7 +24,7 @@ type CollectionTask = {
 
 const ITEMS_PER_PAGE = 5
 
-export default function CollectPage() {
+function CollectPageContent() {
   const [tasks, setTasks] = useState<CollectionTask[]>([])
   const [loading, setLoading] = useState(true)
   const [hoveredWasteType, setHoveredWasteType] = useState<string | null>(null)
@@ -36,33 +37,34 @@ export default function CollectPage() {
     const fetchUserAndTasks = async () => {
       setLoading(true)
       try {
-        // Fetch user
         const userEmail = localStorage.getItem('userEmail')
-        if (userEmail) {
-          const fetchedUser = await getUserByEmail(userEmail)
-          if (fetchedUser) {
-            setUser(fetchedUser)
-          } else {
-            toast.error('User not found. Please log in again.')
-            // Redirect to login page or handle this case appropriately
-          }
-        } else {
+        
+        if (!userEmail) {
           toast.error('User not logged in. Please log in.')
-          // Redirect to login page or handle this case appropriately
+          setLoading(false)
+          return
         }
 
-        // Fetch tasks (include in-progress tasks assigned to this user)
-        let currentUser: any = null
-        if (userEmail) {
-          const fetchedUser = await getUserByEmail(userEmail)
-          if (fetchedUser) {
-            setUser(fetchedUser)
-            currentUser = fetchedUser
-          }
+        // Fetch user and tasks in parallel (faster than sequential)
+        const [fetchedUser, fetchedTasks] = await Promise.all([
+          getUserByEmail(userEmail),
+          getWasteCollectionTasks()
+        ])
+
+        if (!fetchedUser) {
+          toast.error('User not found. Please log in again.')
+          setLoading(false)
+          return
         }
 
-        const fetchedTasks = await getWasteCollectionTasks(currentUser?.id)
-        const formattedTasks = fetchedTasks.map((task: any) => ({
+        setUser(fetchedUser)
+        
+        // Filter tasks: show pending, in_progress, verified, collected, completed, OR tasks assigned to this user
+        const userTasks = fetchedTasks.filter(
+          (task: any) => ['pending', 'in_progress', 'verified', 'collected', 'completed'].includes(task.status) || task.collectorId === fetchedUser.id
+        )
+        
+        const formattedTasks = userTasks.map((task: any) => ({
           ...task,
           date: task.createdAt.toISOString().split('T')[0]
         }))
@@ -92,6 +94,12 @@ export default function CollectPage() {
   const [verifierName, setVerifierName] = useState('')
   const [verifierNumber, setVerifierNumber] = useState('')
 
+  // OTP Collection States
+  const [showOTPModal, setShowOTPModal] = useState(false)
+  const [enteredOTP, setEnteredOTP] = useState('')
+  const [otpLoading, setOtpLoading] = useState(false)
+  const [generatedOTP, setGeneratedOTP] = useState<string | null>(null)
+
   // Reset verification states when a new task is selected
   useEffect(() => {
     if (selectedTask) {
@@ -102,6 +110,9 @@ export default function CollectPage() {
       setShowOverrideWarning(false)
       setVerifierName('')
       setVerifierNumber('')
+      setShowOTPModal(false)
+      setEnteredOTP('')
+      setGeneratedOTP(null)
     }
   }, [selectedTask])
 
@@ -345,6 +356,67 @@ export default function CollectPage() {
         id: 'override'
       })
       setVerificationStatus('failure')
+    }
+  }
+
+  // ✅ OTP Collection Handlers
+  const handleGenerateOTP = async () => {
+    if (!selectedTask || !user) {
+      toast.error('Please select a task first')
+      return
+    }
+
+    try {
+      setOtpLoading(true)
+      console.log('Generating OTP for task:', selectedTask.id)
+      const result = await generateCollectionOTP(selectedTask.id)
+      console.log('OTP Generation Result:', result)
+      
+      if (result.success) {
+        setGeneratedOTP(result.otp)
+        toast.success(`OTP Generated: ${result.otp}`, { duration: 10000 })
+        setShowOTPModal(true)
+      } else {
+        toast.error('Failed to generate OTP: ' + result.message)
+      }
+    } catch (error: any) {
+      console.error('Error generating OTP:', error)
+      toast.error('Failed to generate OTP: ' + (error?.message || 'Unknown error'))
+    } finally {
+      setOtpLoading(false)
+    }
+  }
+
+  const handleVerifyOTP = async () => {
+    if (!selectedTask || !enteredOTP) {
+      toast.error('Please enter OTP')
+      return
+    }
+
+    try {
+      setOtpLoading(true)
+      const result = await verifyCollectionOTP(selectedTask.id, enteredOTP)
+      
+      if (result.success) {
+        toast.success('OTP verified! Waste collection confirmed.')
+        await handleStatusChange(selectedTask.id, 'collected')
+        
+        // Award tokens for collection
+        const earnedReward = 15
+        await saveReward(user.id, earnedReward)
+        toast.success(`Collection verified! You earned ${earnedReward} tokens!`)
+        
+        setShowOTPModal(false)
+        setEnteredOTP('')
+        setSelectedTask(null)
+      } else {
+        toast.error(result.message || 'Invalid OTP')
+      }
+    } catch (error) {
+      console.error('Error verifying OTP:', error)
+      toast.error('Failed to verify OTP')
+    } finally {
+      setOtpLoading(false)
     }
   }
 
@@ -650,12 +722,67 @@ export default function CollectPage() {
               </div>
             )}
 
+            {/* New Verify and Collect Buttons with OTP */}
+            <div className="space-y-2 mt-4">
+              <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                <p className="text-sm text-green-800 font-medium mb-3">OTP-Based Collection Verification</p>
+                <Button 
+                  onClick={handleGenerateOTP}
+                  className="w-full bg-green-600 hover:bg-green-700"
+                  disabled={otpLoading}
+                >
+                  {otpLoading ? (
+                    <>
+                      <Loader className="animate-spin -ml-1 mr-2 h-4 w-4" />
+                      Generating OTP...
+                    </>
+                  ) : (
+                    '🔐 Generate OTP for Collection'
+                  )}
+                </Button>
+              </div>
+
+              {showOTPModal && generatedOTP && (
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                  <p className="text-sm font-medium text-blue-900 mb-2">Enter OTP from Waste Reporter</p>
+                  <div className="flex gap-2 mb-3">
+                    <Input
+                      type="text"
+                      placeholder="Enter 6-digit OTP"
+                      value={enteredOTP}
+                      onChange={(e) => setEnteredOTP(e.target.value.slice(0, 6))}
+                      maxLength={6}
+                      className="text-center text-lg tracking-widest"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-600 mb-3">Generated OTP (for waste reporter to share): <span className="font-mono font-bold text-blue-600">{generatedOTP}</span></p>
+                  <Button 
+                    onClick={handleVerifyOTP}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    disabled={otpLoading || enteredOTP.length !== 6}
+                  >
+                    {otpLoading ? (
+                      <>
+                        <Loader className="animate-spin -ml-1 mr-2 h-4 w-4" />
+                        Verifying OTP...
+                      </>
+                    ) : (
+                      '✓ Verify & Collect Waste'
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
+
             <Button onClick={() => {
               setSelectedTask(null)
               setVerificationImage(null)
               setVerificationStatus('idle')
               setShowOverrideWarning(false)
               setIsManuallyVerified(false)
+              setShowOTPModal(false)
+              setEnteredOTP('')
+              setGeneratedOTP(null)
             }} variant="outline" className="w-full mt-2">
               Close
             </Button>
@@ -692,4 +819,12 @@ function StatusBadge({ status }: { status: CollectionTask['status'] }) {
       {status.replace('_', ' ')}
     </span>
   )
+}
+
+export default function CollectPage() {
+  return (
+    <ProtectedRoute>
+      <CollectPageContent />
+    </ProtectedRoute>
+  );
 }

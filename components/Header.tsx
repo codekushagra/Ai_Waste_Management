@@ -29,6 +29,7 @@ import {
   getUserBalance,
   getUserByEmail,
   markNotificationAsRead,
+  clearAllNotifications,
 } from "@/utils/db/actions";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 
@@ -69,7 +70,8 @@ interface HeaderProps {
 export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
   const [provider, setProvider] = useState<IProvider | null>(null);
   const [loggedIn, setLoggedIn] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const [userInfo, setUserInfo] = useState<any>(null);
   const pathname = usePathname();
   const [notification, setNotification] = useState<Notification[]>([]);
@@ -77,7 +79,15 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [isWeb3AuthInitialized, setIsWeb3AuthInitialized] = useState(false);
 
+  // Prevent hydration mismatch by ensuring component only renders after mount
   useEffect(() => {
+    setIsMounted(true);
+    setLoading(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+    
     const init = async () => {
       try {
         await web3Auth.initModal();
@@ -104,7 +114,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
       }
     };
     init();
-  }, []);
+  }, [isMounted]);
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -209,8 +219,18 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
     await markNotificationAsRead(notificationId);
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
+  const handleClearAllNotifications = async () => {
+    if (userInfo && userInfo.email) {
+      const user = await getUserByEmail(userInfo.email);
+      if (user) {
+        await clearAllNotifications(user.id);
+        setNotification([]);
+      }
+    }
+  };
+
+  if (loading || !isMounted) {
+    return <div className="h-14 bg-white border-b border-gray-400" />; // Return placeholder with same height
   }
   return (
     <header className="bg-white text-black  border-b border-gray-400 py-0.5 sticky top-0 z-50 backdrop-blur-lg">
@@ -247,20 +267,29 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64">
               {notification.length > 0 ? (
-                notification.map((notification: any) => (
+                <>
+                  {notification.map((notification: any) => (
+                    <DropdownMenuItem
+                      key={notification.id}
+                      className="py-2"
+                      onClick={() => handleNotificationClick(notification.id)}
+                    >
+                      <div className="flex flex-col">
+                        <span className="font-medium">{notification.type}</span>
+                        <span className="text-sm text-gray-500">
+                          {notification.message}
+                        </span>
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                  <div className="border-t my-2" />
                   <DropdownMenuItem
-                    key={notification.id}
-                    className="py-2"
-                    onClick={() => handleNotificationClick(notification.id)}
+                    className="py-2 text-red-600 font-medium hover:bg-red-50 cursor-pointer"
+                    onClick={handleClearAllNotifications}
                   >
-                    <div className="flex flex-col">
-                      <span className="font-medium">{notification.type}</span>
-                      <span className="text-sm text-gray-500">
-                        {notification.message}
-                      </span>
-                    </div>
+                    Clear All Notifications
                   </DropdownMenuItem>
-                ))
+                </>
               ) : (
                 <DropdownMenuItem className="py-2">
                   No new notification

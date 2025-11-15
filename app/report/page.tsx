@@ -1,27 +1,22 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 import { MapPin, Upload, CheckCircle, Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-
-
-
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { StandaloneSearchBox, useJsApiLoader } from "@react-google-maps/api";
-// import type {} from "@types/google.maps";
-import { Libraries } from "@react-google-maps/api";
-import { useRouter } from "next/navigation";
-import { Toast, toast } from "react-hot-toast";
+import type { Libraries } from "@react-google-maps/api";
 import { createReport, getRecentReports, getUserByEmail } from "@/utils/db/actions";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 const geminiApiKey = process.env.GEMINI_API_KEY as any;
 const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY || "";
 
 const libraries: Libraries = ['places']
 
-
-export default function ReportPage() {
+function ReportPageContent() {
     const [user, setUser] = useState<any>(null);
     const router = useRouter();
 
@@ -428,6 +423,14 @@ export default function ReportPage() {
             </div>
         </div>
     )
+}
+
+export default function ReportPage() {
+    return (
+        <ProtectedRoute>
+            <ReportPageContent />
+        </ProtectedRoute>
+    );
 }
 
 

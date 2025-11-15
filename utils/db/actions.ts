@@ -1,5 +1,5 @@
 import { db } from "./dbConfig";
-import { Notifications, Reports, Rewards, Transactions, Users, CollectedWastes } from "./schema";
+import { Notifications, Reports, Rewards, Transactions, Users, CollectedWastes, CollectionOTP } from "./schema";
 import { eq, sql, and, desc } from "drizzle-orm";
 
 export async function createUser(email: string, name: string) {
@@ -155,6 +155,18 @@ export async function markNotificationAsRead(notificationId: number) {
   }
 }
 
+export async function clearAllNotifications(userId: number) {
+  try {
+    await db
+      .update(Notifications)
+      .set({ isRead: true })
+      .where(eq(Notifications.userId, userId))
+      .execute();
+  } catch (error) {
+    console.log("Error clearing all notifications", error);
+  }
+}
+
 export async function createReport(
   userId: number,
   
@@ -241,25 +253,35 @@ export async function createNotification(userId: number, message: string, type:s
 
 export async function getWasteCollectionTasks(userId?: number) {
   try {
-    // If a userId is provided, include tasks that are pending OR in_progress and assigned to that user
+    // Optimize: Select only needed columns instead of all columns
+    const baseQuery = db
+      .select({
+        id: Reports.id,
+        location: Reports.location,
+        wasteType: Reports.wasteType,
+        amount: Reports.amount,
+        status: Reports.status,
+        createdAt: Reports.createdAt,
+        collectorId: Reports.collectorId,
+        number: Reports.number,
+      })
+      .from(Reports)
+    
+    let whereClause;
     if (userId) {
       // Include pending, in_progress, verified, collected, and completed tasks
-      const tasks = await db
-        .select()
-        .from(Reports)
-        .where(sql`${Reports.status} IN ('pending', 'in_progress', 'verified', 'collected', 'completed') OR ${Reports.collectorId} = ${userId}`)
-        .orderBy(desc(Reports.createdAt))
-        .execute();
-      return tasks;
+      whereClause = sql`${Reports.status} IN ('pending', 'in_progress', 'verified', 'collected', 'completed') OR ${Reports.collectorId} = ${userId}`
+    } else {
+      // Default: return pending tasks only
+      whereClause = eq(Reports.status, 'pending')
     }
-
-    // Default: return pending tasks only
-    const tasks = await db
-      .select()
-      .from(Reports)
-      .where(eq(Reports.status, 'pending'))
+    
+    const tasks = await baseQuery
+      .where(whereClause)
       .orderBy(desc(Reports.createdAt))
+      .limit(100) // Add limit to prevent fetching too many rows
       .execute();
+    
     return tasks;
   } catch (error) {
     console.error('Error fetching waste collection tasks:', error);
@@ -395,5 +417,90 @@ export async function getImpactStats() {
       tokensEarned: 0,
       co2Offset: 0,
     };
+  }
+}
+
+// ✅ OTP Functions
+export async function generateCollectionOTP(reportId: number) {
+  try {
+    console.log('📌 Starting OTP generation for reportId:', reportId);
+    
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+    const createdAt = new Date();
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 10); // OTP valid for 10 minutes
+
+    console.log('📌 OTP generated:', otp, 'Expires at:', expiresAt);
+
+    const result = await db.insert(CollectionOTP).values({
+      reportId,
+      otp,
+      createdAt,
+      expiresAt,
+      isUsed: false,
+    }).returning();
+
+    console.log('📌 Database insert result:', result);
+
+    if (!result || result.length === 0) {
+      throw new Error('Failed to insert OTP into database - no result returned');
+    }
+
+    console.log('✅ OTP generated successfully:', otp);
+    return {
+      success: true,
+      otp: otp,
+      message: "OTP generated successfully",
+    };
+  } catch (error) {
+    console.error('❌ Error generating OTP:', error);
+    throw error;
+  }
+}
+
+export async function verifyCollectionOTP(reportId: number, otp: string) {
+  try {
+    const result = await db.query.CollectionOTP.findFirst({
+      where: and(
+        eq(CollectionOTP.reportId, reportId),
+        eq(CollectionOTP.otp, otp),
+        eq(CollectionOTP.isUsed, false)
+      ),
+    });
+
+    if (!result) {
+      return { success: false, message: "Invalid OTP" };
+    }
+
+    // Check if OTP has expired
+    if (new Date() > result.expiresAt) {
+      return { success: false, message: "OTP has expired" };
+    }
+
+    // Mark OTP as used
+    await db.update(CollectionOTP)
+      .set({ isUsed: true })
+      .where(eq(CollectionOTP.id, result.id));
+
+    return { success: true, message: "OTP verified successfully" };
+  } catch (error) {
+    console.error('Error verifying OTP:', error);
+    throw new Error('Failed to verify OTP');
+  }
+}
+
+export async function getCollectionOTPForReport(reportId: number) {
+  try {
+    const result = await db.query.CollectionOTP.findFirst({
+      where: and(
+        eq(CollectionOTP.reportId, reportId),
+        eq(CollectionOTP.isUsed, false)
+      ),
+    });
+
+    return result || null;
+  } catch (error) {
+    console.error('Error fetching OTP:', error);
+    return null;
   }
 }

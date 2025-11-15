@@ -2,8 +2,23 @@
 
 import { motion } from 'framer-motion'
 import { Leaf } from 'lucide-react'
+import { useMemo } from 'react'
 
 export default function PageLoader() {
+  // Generate random values once on client to avoid hydration mismatch
+  const particles = useMemo(() => {
+    return [...Array(6)].map((_, i) => ({
+      id: i,
+      initialX: Math.random() * 100 - 50,
+      initialY: Math.random() * 100 - 50,
+      targetX: Math.random() * 400 - 200,
+      targetY: Math.random() * 400 - 200,
+      duration: 3 + Math.random() * 2,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+    }))
+  }, [])
+
   return (
     <motion.div
       initial={{ opacity: 1 }}
@@ -128,28 +143,28 @@ export default function PageLoader() {
 
       {/* Floating particles background */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {[...Array(6)].map((_, i) => (
+        {particles.map((particle) => (
           <motion.div
-            key={i}
+            key={particle.id}
             initial={{
-              x: Math.random() * 100 - 50,
-              y: Math.random() * 100 - 50,
+              x: particle.initialX,
+              y: particle.initialY,
               opacity: 0,
             }}
             animate={{
-              x: Math.random() * 400 - 200,
-              y: Math.random() * 400 - 200,
+              x: particle.targetX,
+              y: particle.targetY,
               opacity: [0, 0.5, 0],
             }}
             transition={{
-              duration: 3 + Math.random() * 2,
+              duration: particle.duration,
               repeat: Infinity,
               ease: 'easeInOut',
             }}
             className="absolute w-2 h-2 bg-green-400 rounded-full blur-sm"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
+              left: `${particle.left}%`,
+              top: `${particle.top}%`,
             }}
           />
         ))}

@@ -15,7 +15,7 @@ import {
   Users,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const sidebarItems = [
   { href: "/", label: "Home", icon: Home },
@@ -45,7 +45,15 @@ export default function Sidebar({ open }: SidebarProps) {
 
     return "";
   }
-  const [selected, setSelected] = useState(selectPathName(pathname));
+  
+  const [selected, setSelected] = useState("");
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Update selected only after mount to prevent hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+    setSelected(selectPathName(pathname));
+  }, [pathname]);
 
   const parent = {
     hidden: { opacity: 0 },
