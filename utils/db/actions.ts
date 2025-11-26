@@ -4,11 +4,30 @@ import { eq, sql, and, desc } from "drizzle-orm";
 
 export async function createUser(email: string, name: string) {
   try {
+    // If user already exists, return it
+    const [existing] = await db
+      .select()
+      .from(Users)
+      .where(eq(Users.email, email))
+      .execute();
+
+    if (existing) return existing;
+
     const [user] = await db
       .insert(Users)
       .values({ email, name })
       .returning()
       .execute();
+
+    // Credit welcome points (20) for first time registrations
+    try {
+      await createTransaction(user.id, "earned_collect", 20, "Welcome bonus: 20 points for signing up");
+      // Optionally create notification (best-effort)
+      await createNotification(user.id, `Welcome! You've been credited 20 points.`, "reward");
+    } catch (e) {
+      console.error("Error crediting welcome points:", e);
+    }
+
     return user;
   } catch (error) {
     console.log("Error creating user", error);
@@ -72,6 +91,38 @@ export async function getAvailableRewards(userId: number) {
     console.log("Rewards from database:", dbRewards);
 
     // Combine user points and database rewards
+    // Add DB rewards then append demo coupons and a certificate reward
+    const demoExtraRewards = [
+      {
+        id: 100001,
+        name: "ClayCo. 20% Off",
+        cost: 70,
+        description: "20% discount at ClayCo.",
+        collectionInfo: "Use at checkout on ClayCo website.",
+      },
+      {
+        id: 100002,
+        name: "EcoMart Voucher",
+        cost: 70,
+        description: "$10 off at EcoMart.",
+        collectionInfo: "Apply code at EcoMart checkout.",
+      },
+      {
+        id: 100003,
+        name: "GreenGoods Coupon",
+        cost: 70,
+        description: "Exclusive 15% off GreenGoods.",
+        collectionInfo: "Redeemable online at GreenGoods.",
+      },
+      {
+        id: 100010,
+        name: "Certificate of Recognition",
+        cost: 50,
+        description: "Certificate for contributing to a cleaner environment.",
+        collectionInfo: "Generate a personalized certificate.",
+      },
+    ];
+
     const allRewards = [
       {
         id: 0, // Use a special ID for user's points
@@ -81,6 +132,8 @@ export async function getAvailableRewards(userId: number) {
         collectionInfo: "Points earned from reporting and collecting waste",
       },
       ...dbRewards,
+      // Append demo-only rewards (coupons & certificate)
+      ...demoExtraRewards,
     ];
 
     console.log("All available rewards:", allRewards);
@@ -107,16 +160,30 @@ export async function getUnreadNotifications(userId: number) {
 }
 
 export async function getUserBalance(userId: number): Promise<number> {
-  const transactions = (await getRewardTransactions(userId)) || [];
+  try {
+    // Fetch ALL transactions for this user (not just the last 10)
+    const transactions = await db
+      .select({
+        type: Transactions.type,
+        amount: Transactions.amount,
+      })
+      .from(Transactions)
+      .where(eq(Transactions.userId, userId))
+      .execute();
 
-  if (!transactions) return 0;
-  const balance = transactions.reduce((acc: number, transaction: any) => {
-    return transaction.type.startsWith("earned")
-      ? acc + transaction.amount
-      : acc - transaction.amount;
-  }, 0);
+    if (!transactions || transactions.length === 0) return 0;
+    
+    const balance = transactions.reduce((acc: number, transaction: any) => {
+      return transaction.type.startsWith("earned")
+        ? acc + transaction.amount
+        : acc - transaction.amount;
+    }, 0);
 
-  return Math.max(balance, 0);
+    return Math.max(balance, 0);
+  } catch (error) {
+    console.error("Error calculating user balance:", error);
+    return 0;
+  }
 }
 
 export async function getRewardTransactions(userId: number) {
@@ -370,12 +437,8 @@ export async function saveCollectedWaste(
       .returning()
       .execute();
 
-    // Update report status to collected
-    await db
-      .update(Reports)
-      .set({ status: "collected" })
-      .where(eq(Reports.id, reportId))
-      .execute();
+    // Don't overwrite the report status - it should have already been set to 'verified' by handleStatusChange
+    // The report status is managed separately through updateTaskStatus
 
     return collectedWaste;
   } catch (error) {

@@ -177,6 +177,10 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
         } catch (error) {
           console.log("Error creating user", error);
         }
+        // Auto-reload page after successful login
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
       }
     } catch (error) {
       console.error("Error logging in", error);
@@ -194,6 +198,10 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
       setLoggedIn(false);
       setUserInfo(null);
       localStorage.removeItem("userEmail");
+      // Auto-reload page after logout to reset UI and clear protected views
+      setTimeout(() => {
+        window.location.reload();
+      }, 300);
     } catch (error) {
       console.error("Error logging out", error);
     }

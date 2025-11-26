@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { StandaloneSearchBox, useJsApiLoader } from "@react-google-maps/api";
 import type { Libraries } from "@react-google-maps/api";
-import { createReport, getRecentReports, getUserByEmail } from "@/utils/db/actions";
+import { createReport, getRecentReports, getUserByEmail, getUserBalance } from "@/utils/db/actions";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 const geminiApiKey = process.env.GEMINI_API_KEY as any;
@@ -212,6 +212,12 @@ function ReportPageContent() {
             setVerificationResults(null)
 
             toast.success(`Report submitted successfully! You've earned ${report.points} points`)
+            try {
+                const newBalance = await getUserBalance(user.id)
+                window.dispatchEvent(new CustomEvent('balanceUpdate', { detail: newBalance }))
+            } catch (e) {
+                console.error('Failed to refresh balance after report submission:', e)
+            }
         } catch (e) {
             console.error("Error submitting report", e)
             toast.error("Failed to submit report")

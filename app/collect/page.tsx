@@ -4,7 +4,7 @@ import { Trash2, MapPin, CheckCircle, Clock, ArrowRight, Camera, Upload, Loader,
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'react-hot-toast'
-import { getWasteCollectionTasks, updateTaskStatus, saveReward, saveCollectedWaste, getUserByEmail, generateCollectionOTP, verifyCollectionOTP } from '@/utils/db/actions' 
+import { getWasteCollectionTasks, updateTaskStatus, saveReward, saveCollectedWaste, getUserByEmail, generateCollectionOTP, verifyCollectionOTP, getUserBalance } from '@/utils/db/actions' 
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 
@@ -252,6 +252,14 @@ function CollectPageContent() {
         // Save the reward
         await saveReward(user.id, earnedReward)
 
+        // Refresh header balance via event
+        try {
+          const newBalance = await getUserBalance(user.id)
+          window.dispatchEvent(new CustomEvent('balanceUpdate', { detail: newBalance }))
+        } catch (e) {
+          console.error('Failed to refresh balance after reward:', e)
+        }
+
         // Save the collected waste
         await saveCollectedWaste(selectedTask.id, user.id, parsedResult)
 
@@ -261,6 +269,21 @@ function CollectPageContent() {
           position: 'top-center',
           id: 'verification'
         })
+
+        // Refresh tasks list to ensure verified status is persisted
+        try {
+          const updatedTasks = await getWasteCollectionTasks()
+          const userTasks = updatedTasks.filter(
+            (task: any) => ['pending', 'in_progress', 'verified', 'collected', 'completed'].includes(task.status) || task.collectorId === user.id
+          )
+          const formattedTasks = userTasks.map((task: any) => ({
+            ...task,
+            date: task.createdAt.toISOString().split('T')[0]
+          }))
+          setTasks(formattedTasks as CollectionTask[])
+        } catch (e) {
+          console.error('Error refreshing tasks after AI verification:', e)
+        }
       } else {
         toast.error('Verification failed. The collected waste does not match the reported waste.', {
           duration: 5000,
@@ -332,6 +355,12 @@ function CollectPageContent() {
       const earnedReward = Math.floor(Math.random() * 50) + 10
 
       await saveReward(user.id, earnedReward)
+      try {
+        const newBalance = await getUserBalance(user.id)
+        window.dispatchEvent(new CustomEvent('balanceUpdate', { detail: newBalance }))
+      } catch (e) {
+        console.error('Failed to refresh balance after manual override reward:', e)
+      }
       await saveCollectedWaste(selectedTask.id, user.id, manualResult, verifierName, verifierNumber)
 
       setReward(earnedReward)
@@ -347,6 +376,21 @@ function CollectPageContent() {
         position: 'top-center',
         id: 'override'
       })
+
+      // Refresh tasks list to ensure verified status is persisted
+      try {
+        const updatedTasks = await getWasteCollectionTasks()
+        const userTasks = updatedTasks.filter(
+          (task: any) => ['pending', 'in_progress', 'verified', 'collected', 'completed'].includes(task.status) || task.collectorId === user.id
+        )
+        const formattedTasks = userTasks.map((task: any) => ({
+          ...task,
+          date: task.createdAt.toISOString().split('T')[0]
+        }))
+        setTasks(formattedTasks as CollectionTask[])
+      } catch (e) {
+        console.error('Error refreshing tasks after manual override:', e)
+      }
 
       setShowOverrideWarning(false)
     } catch (error) {
@@ -404,7 +448,28 @@ function CollectPageContent() {
         // Award tokens for collection
         const earnedReward = 15
         await saveReward(user.id, earnedReward)
+        try {
+          const newBalance = await getUserBalance(user.id)
+          window.dispatchEvent(new CustomEvent('balanceUpdate', { detail: newBalance }))
+        } catch (e) {
+          console.error('Failed to refresh balance after OTP collection reward:', e)
+        }
         toast.success(`Collection verified! You earned ${earnedReward} tokens!`)
+        
+        // Refresh tasks list to ensure collected status is persisted
+        try {
+          const updatedTasks = await getWasteCollectionTasks()
+          const userTasks = updatedTasks.filter(
+            (task: any) => ['pending', 'in_progress', 'verified', 'collected', 'completed'].includes(task.status) || task.collectorId === user.id
+          )
+          const formattedTasks = userTasks.map((task: any) => ({
+            ...task,
+            date: task.createdAt.toISOString().split('T')[0]
+          }))
+          setTasks(formattedTasks as CollectionTask[])
+        } catch (e) {
+          console.error('Error refreshing tasks after OTP verification:', e)
+        }
         
         setShowOTPModal(false)
         setEnteredOTP('')
